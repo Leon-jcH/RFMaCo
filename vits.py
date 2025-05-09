@@ -78,14 +78,6 @@ class VisionTransformerMoCo(VisionTransformer):
 
     def forward_features(self, x, mask=None):
         x = self.patch_embed(x)  # Shape: (B, num_patches, embed_dim)
-        '''B, L, D = x.shape
-        if mask is not None:
-            # Ensure mask has the correct shape (B, num_patches)
-            mask = mask.unsqueeze(-1).expand(-1, -1, D).type_as(x)  # Shape: (B, num_patches, embed_dim)
-            # Only keep non-masked tokens
-            x = x[mask.squeeze(-1) == 1].view(B, -1, D)  # Shape: (B, non-masked_patches, embed_dim)
-        else:
-            x = x'''
         if mask != None:
             B, L, _ = x.shape
             mask_token = self.mask_token.expand(B, L, -1)
@@ -107,7 +99,6 @@ class VisionTransformerMoCo(VisionTransformer):
 
     def forward(self, x, mask=None):
         x, x_vis = self.forward_features(x, mask)
-        # print(x.shape,x_vis.shape)
         if self.head_dist is not None:
             x, x_dist = self.head(x[0]), self.head_dist(x[1])  # x must be a tuple
             if self.training and not torch.jit.is_scripting():
@@ -117,14 +108,7 @@ class VisionTransformerMoCo(VisionTransformer):
                 return (x + x_dist) / 2
         else:
             x = self.head(x)
-        return x  # [64,196]
-
-def imshow(img, title):
-    img = img / 2 + 0.5  # 非标准化
-    npimg = img.cpu().numpy()
-    plt.imshow(np.transpose(npimg, (1, 2, 0)))
-    plt.title(title)
-    plt.show()
+        return x  
 
 def vit_small( **kwargs):
     model = VisionTransformerMoCo(
