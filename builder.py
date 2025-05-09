@@ -17,7 +17,7 @@ from torchvision.models import ResNet18_Weights
 
 from resnet import ResNet18
 from einops import rearrange
-from .region_focused import RegionFocused
+from .region_focused import RegionawareFocused
 
 class RFMaCo(nn.Module):
     """
@@ -47,8 +47,8 @@ class RFMaCo(nn.Module):
         state_dict = torch.load('./model_state_dict_resnet18.pt')
 
         self.rfmodel.load_state_dict(state_dict)
-        self.rf = RegionFocused(lr=0.1, p=1, gamma=0.01, beta=10.0, num_steps=100)
-        #self.rf = RegionFocused(lr=0.1, p=1, gamma=0.0005, beta=500.0, num_steps=100)
+        self.rf = RegionawareFocused(lr=0.1, p=1, gamma=0.01, beta=10.0, num_steps=100)
+        #self.rf = RegionawareFocused(lr=0.1, p=1, gamma=0.0005, beta=500.0, num_steps=100)
 
     def _build_mlp(self, num_layers, input_dim, mlp_dim, output_dim, last_bn=True):
         mlp = []
