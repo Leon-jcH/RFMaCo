@@ -8,7 +8,7 @@ def smoothness_loss(img, weight=1):
     return weight * (smooth_h + smooth_w)
 
 
-class CognitiveDistillation(nn.Module):
+class RegionawareFocused(nn.Module):
     def __init__(self, lr=0.1, p=1, gamma=0.01, beta=1.0, num_steps=100, mask_channel=1, norm_only=False):
         super(CognitiveDistillation, self).__init__()
         self.p = p
@@ -22,7 +22,6 @@ class CognitiveDistillation(nn.Module):
         self._EPSILON = 1.e-6
 
     def get_raw_mask(self, mask):
-        # 使用 tanh 函数将 mask 归一化到 [0, 1] 范围
         return (torch.tanh(mask) + 1) / 2
 
     def forward(self, model, images, labels=None):
@@ -37,18 +36,15 @@ class CognitiveDistillation(nn.Module):
 
         for step in range(self.num_steps):
             optimizer.zero_grad()
-            mask = self.get_raw_mask(mask_param)  # 获取归一化后的 mask
+            mask = self.get_raw_mask(mask_param) 
             x_adv = images * mask + (1 - mask) * torch.rand(b, c, h, w, device=images.device)
 
-            # 前向传播
             adv_logits = model(x_adv)
             loss = self.l1(adv_logits, logits).mean(dim=1)
 
-            # 计算正则项
             norm = torch.norm(mask, p=self.p, dim=[1, 2, 3]) * self.gamma
             s_l = smoothness_loss(mask, weight=self.beta)
 
-            # 总损失
             loss_total = loss + norm + s_l
             loss_total.mean().backward()
             optimizer.step()
